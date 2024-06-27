@@ -1,0 +1,337 @@
+#include <iostream> 
+
+#include <cstdlib> 
+
+#include <ctime> 
+
+#include <unistd.h>  // for usleep() function (for Linux/MacOS) 
+
+ 
+
+using namespace std; 
+
+ 
+
+const int width = 20;   // Width of the game board 
+
+const int height = 20;  // Height of the game board 
+
+ 
+
+bool gameOver; 
+
+int score; 
+
+ 
+
+enum Direction { STOP = 0, LEFT, RIGHT, UP, DOWN }; 
+
+Direction dir; 
+
+ 
+
+struct Segment { 
+
+    int x, y; 
+
+}; 
+
+ 
+
+Segment worm[100];      // Worm array (max size 100 segments) 
+
+int wormLength; 
+
+int breadX, breadY; 
+
+ 
+
+void Setup(); 
+
+void Draw(); 
+
+void Input(); 
+
+void Logic(); 
+
+ 
+
+void Setup() { 
+
+    gameOver = false; 
+
+    score = 0; 
+
+    dir = STOP; 
+
+    wormLength = 1; 
+
+    worm[0].x = width / 2; 
+
+    worm[0].y = height / 2; 
+
+    breadX = rand() % width; 
+
+    breadY = rand() % height; 
+
+} 
+
+ 
+
+void Draw() { 
+
+    system("clear"); // For Linux/MacOS 
+
+ 
+
+    for (int i = 0; i < width + 2; i++) 
+
+        cout << "#"; 
+
+    cout << endl; 
+
+ 
+
+    for (int i = 0; i < height; i++) { 
+
+        for (int j = 0; j < width; j++) { 
+
+            if (j == 0) 
+
+                cout << "#"; 
+
+             
+
+            bool printWorm = false; 
+
+            for (int k = 0; k < wormLength; k++) { 
+
+                if (worm[k].x == j && worm[k].y == i) { 
+
+                    if (k == 0) 
+
+                        cout << "@"; 
+
+                    else 
+
+                        cout << "o"; 
+
+                    printWorm = true; 
+
+                } 
+
+            } 
+
+ 
+
+            if (j == breadX && i == breadY) 
+
+                cout << "*";  // Bread 
+
+ 
+
+            if (j == width - 1) 
+
+                cout << "#"; 
+
+            else if (!printWorm) 
+
+                cout << " "; 
+
+        } 
+
+        cout << endl; 
+
+    } 
+
+ 
+
+    for (int i = 0; i < width + 2; i++) 
+
+        cout << "#"; 
+
+    cout << endl; 
+
+ 
+
+    cout << "Score: " << score << endl; 
+
+} 
+
+ 
+
+void Input() { 
+
+    char input; 
+
+    cin >> input; 
+
+ 
+
+    switch (input) { 
+
+        case 'a': 
+
+            if (dir != RIGHT) 
+
+                dir = LEFT; 
+
+            break; 
+
+        case 'd': 
+
+            if (dir != LEFT) 
+
+                dir = RIGHT; 
+
+            break; 
+
+        case 'w': 
+
+            if (dir != DOWN) 
+
+                dir = UP; 
+
+            break; 
+
+        case 's': 
+
+            if (dir != UP) 
+
+                dir = DOWN; 
+
+            break; 
+
+        case 'x': 
+
+            gameOver = true; 
+
+            break; 
+
+        default: 
+
+            break; 
+
+    } 
+
+} 
+
+ 
+
+void Logic() { 
+
+    // Move the worm 
+
+    for (int i = wormLength - 1; i > 0; i--) { 
+
+        worm[i].x = worm[i - 1].x; 
+
+        worm[i].y = worm[i - 1].y; 
+
+    } 
+
+ 
+
+    // Move worm head based on direction 
+
+    switch (dir) { 
+
+        case LEFT: 
+
+            worm[0].x--; 
+
+            break; 
+
+        case RIGHT: 
+
+            worm[0].x++; 
+
+            break; 
+
+        case UP: 
+
+            worm[0].y--; 
+
+            break; 
+
+        case DOWN: 
+
+            worm[0].y++; 
+
+            break; 
+
+        default: 
+
+            break; 
+
+    } 
+
+ 
+
+    // Check if worm eats bread 
+
+    if (worm[0].x == breadX && worm[0].y == breadY) { 
+
+        // Increase score and worm length 
+
+        score++; 
+
+        wormLength++; 
+
+        // Generate new bread position 
+
+        breadX = rand() % width; 
+
+        breadY = rand() % height; 
+
+    } 
+
+ 
+
+    // Check if worm hits wall or itself 
+
+    if (worm[0].x >= width || worm[0].x < 0 || worm[0].y >= height || worm[0].y < 0) 
+
+        gameOver = true; 
+
+ 
+
+    for (int i = 1; i < wormLength; i++) { 
+
+        if (worm[0].x == worm[i].x && worm[0].y == worm[i].y) 
+
+            gameOver = true; 
+
+    } 
+
+} 
+
+ 
+
+int main() { 
+
+    srand(time(NULL));  // Seed random number generator 
+
+    Setup(); 
+
+ 
+
+    while (!gameOver) { 
+
+        Draw(); 
+
+        Input(); 
+
+        Logic(); 
+
+        usleep(100000);  // Sleep for 100ms (0.1s) for smoother gameplay 
+
+    } 
+
+ 
+
+    cout << "Game Over! Score: " << score << endl; 
+
+    return 0; 
+
+} 
